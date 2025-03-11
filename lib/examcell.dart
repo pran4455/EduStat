@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/link.dart';
 
 class ExamCellScreen extends StatelessWidget {
   final List<Map<String, String>> examCellOptions = [
@@ -13,27 +13,56 @@ class ExamCellScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Exam Cell')),
-      body: ListView.builder(
-        itemCount: examCellOptions.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(examCellOptions[index]['name']!),
-            trailing: Icon(Icons.open_in_new),
-            onTap: () {
-              _launchURL(examCellOptions[index]['url']!);
+      body: Stack(
+        children: [
+          BackgroundImage(),
+          ListView.builder(
+            itemCount: examCellOptions.length,
+            itemBuilder: (context, index) {
+              return HyperlinkButton(
+                label: examCellOptions[index]['name']!,
+                url: examCellOptions[index]['url']!,
+              );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class BackgroundImage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withOpacity(0.3), // Adjust blur effect
+      ),
+    );
+  }
+}
+
+class HyperlinkButton extends StatelessWidget {
+  final String label;
+  final String url;
+
+  const HyperlinkButton({required this.label, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Link(
+        uri: Uri.parse(url),
+        target: LinkTarget.blank,
+        builder: (context, followLink) {
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
+            onPressed: followLink,
+            child: Text(label, style: TextStyle(fontSize: 18)),
           );
         },
       ),
     );
-  }
-
-  void _launchURL(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      print("Could not launch $url");
-    }
   }
 }

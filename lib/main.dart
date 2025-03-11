@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
-import 'dart:ui';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:io' show Platform; // Import Platform class
 import 'academic.dart';
 import 'base_scaffold.dart';
 import 'facilities.dart';
@@ -27,7 +27,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EduStats',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        appBarTheme: AppBarTheme(
+          titleTextStyle: TextStyle(
+            color: Colors.black, // White color
+            fontSize: 24, // Larger font size
+            fontWeight: FontWeight.bold, // Bold text
+          ),
+        ),
+      ),
       home: MenuScreen(),
       debugShowCheckedModeBanner: false,
     );
@@ -67,240 +76,109 @@ class MenuScreen extends StatelessWidget {
         () => PortfolioScreen(),
   ];
 
+  void _launchURL() async {
+    const url = 'https://www.linkedin.com/in/pranaavu'; // Replace with your desired URL
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  // Platform-aware font size scaling
+  double _getFooterFontSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    if (Platform.isAndroid || Platform.isIOS) {
+      // Mobile devices
+      return screenWidth * 0.05; // Adjust for mobile
+    } else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      // Desktop applications
+      return screenWidth * 0.017; // Adjust for desktop
+    } else {
+      // Web or other platforms
+      return screenWidth * 0.02; // Adjust for web
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double centerX = screenWidth / 2;
-    final double centerY = (screenHeight / 2) - 60;
-    const double innerRadius = 150.0;
-    const double outerRadius = 250.0;
+    final fontSize = _getFooterFontSize(context); // Get platform-aware font size
 
     return BaseScaffold(
       title: 'EduStats',
       body: Stack(
         children: [
-          /// Existing Background Image
-          Positioned.fill(
-            child: Image.network(
-              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCD416TOZ8OkDSL_sqRxmB14xmvgE-iriE3g&s',
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          /// Background Blur Effect
-          Positioned.fill(
-            child: Stack(
-              children: [
-                BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    color: Colors.black12.withOpacity(0.3),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          /// Hexagonal Menu
-          Center(
-            child: SizedBox(
-              width: screenWidth,
-              height: screenHeight,
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: centerY - 60,
-                    left: centerX - 60,
-                    child: HexagonalButton(
-                      label: menuOptions[0],
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: 80), // Add extra padding at the bottom
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: List.generate(menuOptions.length, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => AcademicScreen(),
-                          ),
+                          MaterialPageRoute(builder: (context) => menuScreens[index]()),
                         );
                       },
-                    ),
-                  ),
-                  for (int i = 1; i <= 6; i++)
-                    Positioned(
-                      top: centerY + _calculateOuterTopPosition(i, innerRadius) - 60,
-                      left: centerX + _calculateOuterLeftPosition(i, innerRadius) - 60,
-                      child: HexagonalButton(
-                        label: menuOptions[i],
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => menuScreens[i](),
-                            ),
-                          );
-                        },
+                      child: Text(
+                        menuOptions[index],
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  for (int i = 7; i < menuOptions.length; i++)
-                    Positioned(
-                      top: centerY +
-                          (menuOptions[i] == 'Magazine'
-                              ? -outerRadius
-                              : (menuOptions[i] == 'Policies'
-                              ? outerRadius
-                              : _calculateOuterTopPosition(i - 6, outerRadius))) -
-                          60,
-                      left: centerX +
-                          (menuOptions[i] == 'Magazine' || menuOptions[i] == 'Policies'
-                              ? 0
-                              : _calculateOuterLeftPosition(i - 6, outerRadius)) -
-                          60,
-                      child: HexagonalButton(
-                        label: menuOptions[i],
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => menuScreens[i](),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                ],
+                  );
+                }),
               ),
             ),
           ),
-
           Positioned(
-            bottom: 0, // Position the image at the bottom
+            bottom: 0,
             left: 0,
             right: 0,
-            child: Center(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0), // Add padding to the footer
               child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(15), // Rounded top-left corner
-                  topRight: Radius.circular(15), // Rounded top-right corner
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(15),
+                  bottom: Radius.circular(15),
+                ), // Rounded corners
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  color: Colors.white.withOpacity(0.6), // Pale white background
+                  child: GestureDetector(
+                    onTap: _launchURL,
+                    child: Center(
+                      child: Text(
+                        'Made by U Pranaav',
+                        style: TextStyle(
+                          fontSize: fontSize, // Platform-aware font size
+                          color: Colors.deepPurpleAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                child: Image.network(
-                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0UaUqMumSn3P4Mh-aDhy6fVyUuqytkRA1hg&s',
-                  width: 150, // Centered image width
-                  height: 50, // Set the height of the image
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            bottom: 14, // Slightly above the bottom edge
-            right: 10, // Align to the right
-            child: Text(
-              "By U Pranaav",
-              style: TextStyle(
-                fontSize: 18, // Font size for the text
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Ensuring visibility over the blurred background
-              ),
-            ),
-          ),
-
-          Positioned(
-            bottom: 1, // Slightly above the bottom edge
-            right: 10, // Align to the right
-            child: Text(
-              "2210205",
-              style: TextStyle(
-                fontSize: 14, // Font size for the text
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Ensuring visibility over the blurred background
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  double _calculateOuterTopPosition(int index, double radius) {
-    const double angleStep = 60.0;
-    double angle = angleStep * (index - 1) * (pi / 180);
-    return radius * -1 * sin(angle);
-  }
-
-  double _calculateOuterLeftPosition(int index, double radius) {
-    const double angleStep = 60.0;
-    double angle = angleStep * (index - 1) * (pi / 180);
-    return radius * cos(angle);
-  }
-}
-
-class HexagonalButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-
-  const HexagonalButton({super.key, required this.label, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: ClipPath(
-        clipper: HexagonClipper(),
-        child: Container(
-          color: Colors.blue,
-          width: 120.0,
-          height: 120.0,
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class HexagonClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final Path path = Path();
-    final double w = size.width;
-    final double h = size.height;
-
-    path.moveTo(w * 0.5, 0);
-    path.lineTo(w, h * 0.25);
-    path.lineTo(w, h * 0.75);
-    path.lineTo(w * 0.5, h);
-    path.lineTo(0, h * 0.75);
-    path.lineTo(0, h * 0.25);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
-class OptionScreen extends StatelessWidget {
-  final String option;
-
-  const OptionScreen({super.key, required this.option});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(option)),
-      body: Center(
-        child: Text(
-          'You selected $option',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
       ),
     );
   }

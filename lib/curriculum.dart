@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/link.dart';
 import 'examcell.dart'; // Importing the Exam Cell screen
 
 class CurriculumScreen extends StatelessWidget {
@@ -23,42 +23,74 @@ class CurriculumScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Curriculum')),
-      body: ListView.builder(
-        itemCount: curriculum.length + 1, // +1 for Exam Cell
-        itemBuilder: (context, index) {
-          if (index == 6) {
-            // Exam Cell at position 6
-            return ListTile(
-              title: Text('Exam Cell'),
-              trailing: Icon(Icons.arrow_forward),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ExamCellScreen()),
+      body: Stack(
+        children: [
+          BackgroundImage(),
+          ListView.builder(
+            itemCount: curriculum.length + 1, // +1 for Exam Cell
+            itemBuilder: (context, index) {
+              if (index == 6) {
+                // Exam Cell at position 6
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ExamCellScreen()),
+                      );
+                    },
+                    child: Text('Exam Cell', style: TextStyle(fontSize: 18)),
+                  ),
                 );
-              },
-            );
-          } else {
-            int adjustedIndex = index < 6 ? index : index - 1;
-            return ListTile(
-              title: Text(curriculum[adjustedIndex]['name']!),
-              trailing: Icon(Icons.open_in_new),
-              onTap: () {
-                _launchURL(curriculum[adjustedIndex]['url']!);
-              },
-            );
-          }
-        },
+              } else {
+                int adjustedIndex = index < 6 ? index : index - 1;
+                return HyperlinkButton(
+                  label: curriculum[adjustedIndex]['name']!,
+                  url: curriculum[adjustedIndex]['url']!,
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }
+}
 
-  void _launchURL(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      print("Could not launch $url");
-    }
+class BackgroundImage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withOpacity(0.3), // Adjust blur effect
+      ),
+    );
+  }
+}
+
+class HyperlinkButton extends StatelessWidget {
+  final String label;
+  final String url;
+
+  const HyperlinkButton({required this.label, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Link(
+        uri: Uri.parse(url),
+        target: LinkTarget.blank,
+        builder: (context, followLink) {
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
+            onPressed: followLink,
+            child: Text(label, style: TextStyle(fontSize: 18)),
+          );
+        },
+      ),
+    );
   }
 }
