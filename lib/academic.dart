@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'student.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/link.dart';
 
 class AcademicScreen extends StatelessWidget {
